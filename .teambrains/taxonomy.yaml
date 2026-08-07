@@ -1,0 +1,21 @@
+# Контролируемый словарь: домены, системы, проекты и теги.
+# Неизвестное значение не ошибка, а предупреждение — но ранжирование работает по этому списку.
+domains:
+  - payments
+  - orders
+  - search
+  - infrastructure
+  - mobile
+systems:
+  - postgres
+  - kafka
+  - redis
+  - clickhouse
+  - s3
+projects: []
+tags:
+  - sharding
+  - idempotency
+  - incident
+  - migration
+  - onboarding

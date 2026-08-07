@@ -1,0 +1,28 @@
+# Настройки командной памяти. Меняются через «Предложить команде».
+schema_version: 1
+
+index:
+  # Что не попадает ни в поиск, ни в граф.
+  exclude:
+    - "_archive/**"
+    - "**/_archive/**"
+    - ".git/**"
+  max_file_bytes: 1048576      # 1 МБ
+  debounce_ms: 2000
+  rescan_seconds: 60           # сверка дерева с индексом: события удаления не приходят
+                               # через границу контейнера (см. docs/teambrains/spikes.md)
+
+search:
+  top_k: 20
+  candidates_per_source: 50
+  rrf_k: 60
+  superseded_weight: 0.5       # устаревшее не выбрасываем, но опускаем и помечаем
+
+limits:
+  body_bytes: 65536
+  files_per_commit: 200
+  attachment_bytes: 10485760
+
+retention:
+  # Ничего не удаляем автоматически: гигиена памяти только предлагает (P2).
+  auto_archive_after_months: null

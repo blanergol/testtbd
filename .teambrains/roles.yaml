@@ -1,0 +1,22 @@
+# Закрытый список ролей для мастера подключения. Дополняется через «Предложить команде».
+roles:
+  - id: backend-engineer
+    title: Бэкенд-инженер
+  - id: frontend-engineer
+    title: Фронтенд-инженер
+  - id: mobile-engineer
+    title: Мобильный разработчик
+  - id: qa-engineer
+    title: Инженер по тестированию
+  - id: devops
+    title: DevOps / SRE
+  - id: data-engineer
+    title: Дата-инженер
+  - id: analyst
+    title: Аналитик
+  - id: designer
+    title: Дизайнер
+  - id: product-manager
+    title: Продакт-менеджер
+  - id: team-lead
+    title: Тимлид

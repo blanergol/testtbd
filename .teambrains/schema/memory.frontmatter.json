@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://teambrains.local/schema/memory.frontmatter.json",
+  "title": "TeamBrains memory frontmatter",
+  "description": "Единый frontmatter для всех записей памяти: summary, notes, decisions, runbooks, postmortems, howto. Валидируется перед индексацией; невалидный файл не индексируется, а попадает в панель «Проблемы».",
+  "type": "object",
+  "required": [
+    "schema",
+    "id",
+    "type",
+    "title",
+    "author",
+    "source",
+    "created_at",
+    "valid_from",
+    "status",
+    "visibility",
+    "index"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "memory/v1" },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "ULID. Стабильный ключ записи: цитаты, чанки, эпизоды графа и supersedes ссылаются на него. Никогда не меняется, не зависит от имени файла."
+    },
+    "type": {
+      "enum": ["summary", "note", "decision", "runbook", "postmortem", "howto"]
+    },
+    "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+    "author": {
+      "type": "object",
+      "required": ["slug", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": { "$ref": "#/$defs/personSlug" },
+        "name": { "type": "string", "minLength": 1 },
+        "role": { "type": "string" }
+      }
+    },
+    "scope": {
+      "enum": ["brief", "medium", "full"],
+      "description": "Масштаб summary. brief ≤ 150 слов, medium 300–600, full 1000–2000."
+    },
+    "source": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["agent_chat", "manual", "teambrains_agent"] },
+        "agent": { "type": "string", "description": "claude-code, codex, cursor…" },
+        "session_ref": { "type": "string" },
+        "based_on": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ulid" },
+          "description": "Записи, использованные ответом агента TeamBrains (kind=teambrains_agent)."
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Transaction time: когда запись сделали."
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Valid time: когда факт стал верен. В граф уходит именно это значение, а не created_at."
+    },
+    "valid_to": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "default": null,
+      "description": "null — факт верен до сих пор."
+    },
+    "supersedes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ulid" },
+      "default": [],
+      "description": "Какие записи эта отменяет. Заполняется человеком или агентом с подтверждением человека."
+    },
+    "status": { "enum": ["active", "archived", "superseded"], "default": "active" },
+    "visibility": {
+      "enum": ["team", "private"],
+      "description": "private физически не лежит в общем репозитории: такие записи хранятся в ~/.teambrains/<repo-slug>/private/ и индексируются только локально."
+    },
+    "index": { "type": "boolean", "default": true },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[^\\s,][^,]{0,48}$" },
+      "default": [],
+      "description": "Значения из .teambrains/taxonomy.yaml; язык любой. Неизвестный тег — предупреждение, а не ошибка: словарь пополняется предложением команде."
+    },
+    "entities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "projects": { "type": "array", "items": { "type": "string" } },
+        "systems": { "type": "array", "items": { "type": "string" } },
+        "people": { "type": "array", "items": { "$ref": "#/$defs/personSlug" } }
+      },
+      "description": "Заготовка для Graphiti: подсказка извлекателю сущностей, а не замена ему."
+    },
+    "confidence": { "enum": ["high", "medium", "low"], "default": "medium" },
+    "language": { "enum": ["ru", "en"] }
+  },
+  "$defs": {
+    "ulid": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "personSlug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*-[0-9a-f]{8}$" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "source": { "properties": { "kind": { "const": "agent_chat" } } } } },
+      "then": { "properties": { "source": { "required": ["kind", "agent"] } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "superseded" } } },
+      "then": {
+        "anyOf": [
+          { "required": ["valid_to"], "properties": { "valid_to": { "type": "string" } } },
+          { "properties": { "supersedes": { "minItems": 1 } } }
+        ],
+        "description": "superseded без valid_to и без ссылки — это потерянный факт: агент не сможет объяснить, чем именно он отменён."
+      }
+    }
+  ]
+}
